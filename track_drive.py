@@ -43,7 +43,7 @@ def detect_green_light(img):
         return False
 
     h, w = img.shape[:2]
-    y = 100  # 신호등이 위치한 높이로 조정 필요
+    y = 100
     cv2.circle(img, (w // 2, y), 5, (255, 255, 255), -1)
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -58,22 +58,22 @@ def detect_green_light(img):
 
 def process_lane(img):
     h, w = img.shape[:2]
-    roi = img[h//2:h, :]  # 아래 절반만 사용
-    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    _, binary = cv2.threshold(blur, 180, 255, cv2.THRESH_BINARY)
+    roi = img[h//2:h, :]
+    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
-    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cx = w // 2  # 기본 중심값
+    # 흰색 실선 기준 차선 인식
+    white_mask = cv2.inRange(hsv, (0, 0, 200), (180, 30, 255))
+    M = cv2.moments(white_mask)
+    cx = w // 2
 
-    if contours:
-        largest = max(contours, key=cv2.contourArea)
-        M = cv2.moments(largest)
-        if M['m00'] != 0:
-            cx = int(M['m10'] / M['m00'])
+    if M['m00'] != 0:
+        cx_white = int(M['m10'] / M['m00'])
+        cx = cx_white - 30  # 흰 실선보다 왼쪽으로 약간 이동한 위치를 따라감
+        cv2.circle(roi, (cx_white, h // 4), 5, (255, 255, 255), -1)
+        cv2.circle(roi, (cx, h // 4), 5, (0, 255, 0), -1)
 
     error = cx - (w // 2)
-    angle = -error / 3.0  # 실험적으로 조정
+    angle = -error / 3.0
     return angle
 
 def start():

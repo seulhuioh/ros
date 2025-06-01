@@ -14,10 +14,10 @@ source devel/setup.bash
 ```
 
 ### TCP 통신 수행
-```
+```sh
 roslaunch ros_tcp_endpoint endpoint.launch tcp_ip:=0.0.0.0 tcp_port:=10000
 ```
 ### 실행
-```
+```sh
 python3 ~/xycar_ws/src/kookmin/driver/track_drive.py
 ```
