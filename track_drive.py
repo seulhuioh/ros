@@ -61,20 +61,22 @@ def process_lane(img):
     roi = img[h//2:h, :]
     hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
-    # 흰색 실선 기준 차선 인식
+    # 흰색 실선 감지 및 표시
     white_mask = cv2.inRange(hsv, (0, 0, 200), (180, 30, 255))
-    M = cv2.moments(white_mask)
-    cx = w // 2
+    M_white = cv2.moments(white_mask)
+    if M_white['m00'] != 0:
+        cx_white = int(M_white['m10'] / M_white['m00'])
+        cv2.circle(roi, (cx_white, h // 4), 5, (0, 0, 0), -1)  # 검정색 점
 
-    if M['m00'] != 0:
-        cx_white = int(M['m10'] / M['m00'])
-        cx = cx_white - 30  # 흰 실선보다 왼쪽으로 약간 이동한 위치를 따라감
-        cv2.circle(roi, (cx_white, h // 4), 5, (255, 255, 255), -1)
-        cv2.circle(roi, (cx, h // 4), 5, (0, 255, 0), -1)
+    # 노란 중앙선 감지 및 표시
+    yellow_mask = cv2.inRange(hsv, (20, 100, 100), (30, 255, 255))
+    M_yellow = cv2.moments(yellow_mask)
+    if M_yellow['m00'] != 0:
+        cx_yellow = int(M_yellow['m10'] / M_yellow['m00'])
+        cv2.circle(roi, (cx_yellow, h // 4), 5, (0, 255, 255), -1)  # 노란 점
 
-    error = cx - (w // 2)
-    angle = -error / 3.0
-    return angle
+    # 주행 angle 계산은 하지 않음 (단순 시각화 목적)
+    return 0.0
 
 def start():
     global motor, image, ranges
@@ -120,8 +122,8 @@ def start():
             print("Waiting for green light...")
         else:
             speed = Fix_Speed
-            angle = process_lane(image)
-            print("Green light detected. Driving...")
+            angle = process_lane(image)  # 점만 표시
+            print("Green light detected. Drawing points...")
 
         drive(angle=angle, speed=speed)
         time.sleep(0.1)
